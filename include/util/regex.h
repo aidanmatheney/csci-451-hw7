@@ -2,4 +2,4 @@
 
 #include <regex.h>
 
-regex_t *safeRegcomp(char const *pattern, int flags, char const *callerDescription);
+void safeRegcomp(regex_t *regexPtr, char const *pattern, int flags, char const *callerDescription);

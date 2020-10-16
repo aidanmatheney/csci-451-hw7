@@ -19,7 +19,10 @@ unsigned int safeVfprintf(
     char const *callerDescription
 );
 
+bool safeFgetc(char *charPtr, FILE *file, char const *callerDescription);
 bool safeFgets(char *buffer, size_t bufferLength, FILE *file, char const *callerDescription);
+
+char *readFileLine(FILE *file);
 
 char *readAllFileText(char const *filePath);
 

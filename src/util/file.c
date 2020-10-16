@@ -109,6 +109,49 @@ unsigned int safeVfprintf(
 }
 
 /**
+ * Read a character from the given file. If the operation fails, abort the program with an error message.
+ *
+ * @param charPtr The location to store the read character.
+ * @param file The file to read from.
+ * @param callerDescription A description of the caller to be included in the error message. This could be the name of
+ *                          the calling function, plus extra information if useful.
+ *
+ * @returns Whether the end-of-file was hit.
+ */
+bool safeFgetc(
+    char * const charPtr,
+    FILE * const file,
+    char const * const callerDescription
+) {
+    guardNotNull(charPtr, "charPtr", "safeFgetc");
+    guardNotNull(file, "file", "safeFgetc");
+    guardNotNull(callerDescription, "callerDescription", "safeFgetc");
+
+    int const fgetcResult = fgetc(file);
+    if (fgetcResult == EOF) {
+        bool const fgetcError = ferror(file);
+        if (fgetcError) {
+            int const fgetcErrorCode = errno;
+            char const * const fgetcErrorMessage = strerror(fgetcErrorCode);
+
+            abortWithErrorFmt(
+                "%s: Failed to read char from file using fgetc (error code: %d; error message: \"%s\")",
+                callerDescription,
+                fgetcErrorCode,
+                fgetcErrorMessage
+            );
+            return false;
+        }
+
+        // EOF
+        return false;
+    }
+
+    *charPtr = (char)fgetcResult;
+    return true;
+}
+
+/**
  * Read characters from the given file into the given buffer. Stop as soon as one of the following conditions has been
  * met: (A) `bufferLength - 1` characters have been read, (B) a newline is encountered, or (C) the end of the file is
  * reached. The string read into the buffer will end with a terminating character. If the operation fails, abort the
@@ -153,6 +196,39 @@ bool safeFgets(
     }
 
     return true;
+}
+
+/**
+ * Read a line from the file. If the current file position is EOF, return null.
+ *
+ * @param file The file to read from.
+ *
+ * @returns The line (the caller is responsible for freeing this memory), or null if the current file position is EOF.
+ */
+char *readFileLine(FILE * const file) {
+    guardNotNull(file, "file", "readFileLine");
+
+    StringBuilder const lineBuilder = StringBuilder_create();
+
+    bool lineBeginsAtEof = true;
+    char readCharacter;
+    while (safeFgetc(&readCharacter, file, "readFileLine")) {
+        lineBeginsAtEof = false;
+
+        if (readCharacter == '\n') {
+            break;
+        }
+
+        StringBuilder_appendChar(lineBuilder, readCharacter);
+    }
+
+    if (lineBeginsAtEof) {
+        StringBuilder_destroy(lineBuilder);
+        return NULL;
+    }
+
+    char * const line = StringBuilder_toStringAndDestroy(lineBuilder);
+    return line;
 }
 
 /**
