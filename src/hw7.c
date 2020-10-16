@@ -125,7 +125,7 @@ static void *processTransactionsThreadStart(void * const argAsVoidPtr) {
             // Simulate delay between transaction sections
             nanosleep(&(struct timespec){
                 .tv_sec = randomInt(0, 2),
-                .tv_nsec = randomInt(0, 999999999)
+                .tv_nsec = randomInt(0, 1000 * 1000 * 1000)
             }, NULL);
         }
 
